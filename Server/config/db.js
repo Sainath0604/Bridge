@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const connectDB = async (dbName = "bridge") => {
+const connectDB = async (dbName = "whatsapp") => {
   const isProduction = process.env.NODE_ENV === "production";
   const mongoUrl = isProduction
     ? `${process.env.DATABASE_URL}/${dbName}`

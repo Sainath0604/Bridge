@@ -1,14 +1,13 @@
 const express = require("express");
+const router = express.Router();
 const {
-  createMessage,
-  getGroupedMessages,
-  updateStatus,
+  getUsers,
+  getMessagesByWaId,
+  sendMessage,
 } = require("../controllers/messageController");
 
-const router = express.Router();
-
-router.post("/", createMessage);
-router.get("/", getGroupedMessages);
-router.patch("/status", updateStatus);
+router.get("/users", getUsers);
+router.get("/messages/:wa_id", getMessagesByWaId);
+router.post("/send", sendMessage);
 
 module.exports = router;

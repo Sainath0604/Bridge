@@ -2,10 +2,12 @@ const mongoose = require("mongoose");
 
 const MessageSchema = new mongoose.Schema(
   {
+    from: String,
+    to: String,
+    name: String,
     wa_id: String,
+    text: String,
     message_id: String,
-    sender_name: String,
-    message: String,
     type: String,
     timestamp: Date,
     status: {
