@@ -8,6 +8,8 @@ export interface Message {
   message?: string; // optional if backend sometimes sends text
   text?: string; // added to match backend naming
   from?: string; // sender ID (WhatsApp ID)
+  to?: string; // receiver ID (WhatsApp ID)
+  name?: string; // receiver name
   type: string;
   timestamp: string | Date;
   status: "sent" | "delivered" | "read";

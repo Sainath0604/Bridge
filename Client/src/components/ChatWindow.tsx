@@ -28,6 +28,18 @@ export default function ChatWindow({ group }: Props) {
     }
   };
 
+  const handleNewMessage = (msg: Message, replaceLocalId?: string) => {
+    setMessages((prev) => {
+      if (replaceLocalId) {
+        // Replace message with local ID by the server message
+        return prev.map((m) => (m.message_id === replaceLocalId ? msg : m));
+      } else {
+        // Add new message
+        return [...prev, msg];
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col h-full w-full">
       {/* Header */}
@@ -67,7 +79,11 @@ export default function ChatWindow({ group }: Props) {
 
       {/* Input */}
       <div className="border-t p-2">
-        <MessageInput waId={group.wa_id} />
+        <MessageInput
+          waId={group.wa_id}
+          name={group.name ?? ""}
+          onMessageSent={handleNewMessage}
+        />
       </div>
     </div>
   );
