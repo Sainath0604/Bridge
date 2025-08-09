@@ -1,30 +1,34 @@
-import { useEffect, useState } from "react";
-import { fetchChats } from "../api/messages";
-import type { ChatGroup, Message } from "../types/message";
+import { useState, useEffect } from "react";
 import ChatList from "../components/ChatList";
 import ChatWindow from "../components/ChatWindow";
+import type { ChatGroup } from "../types/message";
+import { fetchUsers } from "../api/messages";
 
 export default function Home() {
-  const [chatGroups, setChatGroups] = useState<ChatGroup[]>([]);
+  const [users, setUsers] = useState<ChatGroup[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatGroup | null>(null);
 
   useEffect(() => {
-    fetchChats().then(setChatGroups);
+    loadUsers();
   }, []);
 
-  const handleChatSelect = (group: ChatGroup) => {
-    setSelectedChat(group);
+  const loadUsers = async () => {
+    const data = await fetchUsers();
+    setUsers(data);
   };
 
   return (
     <div className="flex h-screen">
-      <ChatList chats={chatGroups} onSelect={handleChatSelect} />
+      {/* Left panel: Chat list */}
+      <ChatList chats={users} onSelect={(chat) => setSelectedChat(chat)} />
+
+      {/* Right panel: Chat window */}
       <div className="flex-1">
         {selectedChat ? (
           <ChatWindow group={selectedChat} />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Select a conversation
+          <div className="flex items-center justify-center h-full text-gray-400">
+            Select a chat to start messaging
           </div>
         )}
       </div>

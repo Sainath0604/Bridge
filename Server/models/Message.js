@@ -19,4 +19,12 @@ const MessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Message", MessageSchema);
+// Middleware to log DB name before save
+MessageSchema.pre("save", function (next) {
+  const dbName = mongoose.connection.name;
+  console.log(`[Message Model] Using database: ${dbName}`);
+  next();
+});
+
+// Explicitly set collection name to 'processed_messages'
+module.exports = mongoose.model("Message", MessageSchema, "processed_messages");
