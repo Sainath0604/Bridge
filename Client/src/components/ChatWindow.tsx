@@ -4,6 +4,7 @@ import MessageInput from "./MessageInput";
 import { fetchChat } from "../api/messages";
 import { BackIcon } from "../Icons";
 import { useNavigate } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
 
 interface Props {
   group: ChatGroup;
@@ -12,12 +13,53 @@ interface Props {
 export default function ChatWindow({ group }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const navigate = useNavigate();
+  const socket = useSocket();
 
+  // Load messages when chat changes
   useEffect(() => {
     if (group?.wa_id) {
       loadMessages(group.wa_id);
     }
   }, [group?.wa_id]);
+
+  // Socket real-time listener
+  useEffect(() => {
+    if (!socket || !group?.wa_id) {
+      console.warn(
+        "⚠️ Socket or group.wa_id not ready, skipping listener setup"
+      );
+      return;
+    }
+
+    console.log(`🔌 Setting up socket listener for wa_id: ${group.wa_id}`);
+
+    const handleIncomingMessage = (message: Message) => {
+      console.log("📡 Received socket event message:new:", message);
+
+      if (message.wa_id === group.wa_id) {
+        console.log(`✅ Message belongs to current chat (${group.wa_id})`);
+
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.message_id === message.message_id);
+          if (exists) {
+            console.log(`⚠️ Duplicate message ignored: ${message.message_id}`);
+            return prev;
+          }
+          console.log(`➕ Adding new message: ${message.message_id}`);
+          return [...prev, message];
+        });
+      } else {
+        console.log(`⏩ Ignored message for different wa_id: ${message.wa_id}`);
+      }
+    };
+
+    socket.on("message:new", handleIncomingMessage);
+
+    return () => {
+      console.log(`🛑 Removing socket listener for wa_id: ${group.wa_id}`);
+      socket.off("message:new", handleIncomingMessage);
+    };
+  }, [socket, group?.wa_id]);
 
   const loadMessages = async (wa_id: string) => {
     const chats = await fetchChat(wa_id);
@@ -28,26 +70,12 @@ export default function ChatWindow({ group }: Props) {
     }
   };
 
-  const handleNewMessage = (msg: Message, replaceLocalId?: string) => {
-    setMessages((prev) => {
-      if (replaceLocalId) {
-        // Replace message with local ID by the server message
-        return prev.map((m) => (m.message_id === replaceLocalId ? msg : m));
-      } else {
-        // Add new message
-        return [...prev, msg];
-      }
-    });
-  };
-
   return (
     <div className="flex flex-col h-full w-full">
       {/* Header */}
       <div className="border-b flex items-center">
         <button
-          onClick={() => {
-            navigate(`/chats`);
-          }}
+          onClick={() => navigate(`/chats`)}
           className="h-full sm:hidden px-4 bg-green-100"
         >
           <BackIcon />
@@ -79,11 +107,7 @@ export default function ChatWindow({ group }: Props) {
 
       {/* Input */}
       <div className="border-t p-2">
-        <MessageInput
-          waId={group.wa_id}
-          name={group.name ?? ""}
-          onMessageSent={handleNewMessage}
-        />
+        <MessageInput waId={group.wa_id} name={group.name ?? ""} />
       </div>
     </div>
   );

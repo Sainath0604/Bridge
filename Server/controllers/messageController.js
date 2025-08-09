@@ -145,7 +145,7 @@ exports.sendMessage = async (req, res) => {
     }
 
     const newMsg = await Message.create({
-      from: from || process.env.BUSINESS_NUMBER || "system", // set business number in env if available
+      from: from || process.env.BUSINESS_NUMBER || "system",
       to: to || wa_id,
       name: name || null,
       wa_id,
@@ -156,9 +156,8 @@ exports.sendMessage = async (req, res) => {
       status: "sent",
     });
 
-    console.log("Created new message:", newMsg.message_id);
+    console.log("✅ Created new message:", newMsg.message_id);
 
-    // Optionally: return the message in the same shape as getMessagesByWaId uses
     const response = {
       from: newMsg.from,
       to: newMsg.to,
@@ -170,6 +169,15 @@ exports.sendMessage = async (req, res) => {
       timestamp: newMsg.timestamp,
       status: newMsg.status,
     };
+
+    // 🔥 Emit to all connected clients
+    const io = req.app.get("io");
+    if (io) {
+      console.log("📢 Emitting message:new to clients:", response);
+      io.emit("message:new", response);
+    } else {
+      console.warn("⚠️ io instance not found!");
+    }
 
     return res.status(201).json(response);
   } catch (err) {

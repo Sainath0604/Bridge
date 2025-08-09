@@ -2,17 +2,61 @@ import { useParams, useNavigate } from "react-router-dom";
 import ChatList from "./components/ChatList";
 import ChatWindow from "./components/ChatWindow";
 import { fetchUsers } from "./api/messages";
-import type { ChatGroup } from "./types/message";
+import type { ChatGroup, Message } from "./types/message";
 import { useEffect, useState } from "react";
+import { useSocket } from "./context/SocketContext";
 
 export default function Layout() {
   const { wa_id } = useParams();
   const navigate = useNavigate();
+  const socket = useSocket();
   const [users, setUsers] = useState<ChatGroup[]>([]);
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleIncomingMessage = (message: Message) => {
+      setUsers((prevUsers) => {
+        let updated = false;
+
+        const newList = prevUsers.map((user) => {
+          if (user.wa_id === message.wa_id) {
+            updated = true;
+            return {
+              ...user,
+              lastMessage: message.text,
+              lastTimestamp: message.timestamp,
+              messages: [...(user.messages || []), message], // safe spread
+            };
+          }
+          return user;
+        });
+
+        // If message is from a new user not in the list, add them
+        if (!updated) {
+          newList.unshift({
+            wa_id: message.wa_id,
+            name: message.name ?? message.wa_id,
+            lastMessage: message.text,
+            lastTimestamp: message.timestamp,
+            messages: [message], // always array
+          });
+        }
+
+        return newList;
+      });
+    };
+
+    socket.on("message:new", handleIncomingMessage);
+
+    return () => {
+      socket.off("message:new", handleIncomingMessage); // no return value
+    };
+  }, [socket]);
 
   const loadUsers = async () => {
     const data = await fetchUsers();
