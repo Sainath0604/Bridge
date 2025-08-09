@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import type { ChatGroup, Message } from "../types/message";
 import MessageInput from "./MessageInput";
 import { fetchChat } from "../api/messages";
+import { BackIcon } from "../Icons";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   group: ChatGroup;
@@ -9,6 +11,7 @@ interface Props {
 
 export default function ChatWindow({ group }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (group?.wa_id) {
@@ -18,24 +21,35 @@ export default function ChatWindow({ group }: Props) {
 
   const loadMessages = async (wa_id: string) => {
     const chats = await fetchChat(wa_id);
-    // If your API returns { wa_id, messages: [...] }
-    if (chats && Array.isArray(chats.messages)) {
+    if (Array.isArray(chats)) {
+      setMessages(chats);
+    } else if (chats && Array.isArray(chats.messages)) {
       setMessages(chats.messages);
     }
   };
 
-  // console.log("group ==>", group);
-
   return (
-    <div className="flex flex-col h-full w-full ">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-bold">{group.name ?? group.wa_id}</h2>
-        <p className="text-sm text-gray-500">{group.wa_id}</p>
+    <div className="flex flex-col h-full w-full">
+      {/* Header */}
+      <div className="border-b flex items-center">
+        <button
+          onClick={() => {
+            navigate(`/chats`);
+          }}
+          className="h-full sm:hidden px-4 bg-green-100"
+        >
+          <BackIcon />
+        </button>
+        <div className="flex flex-col p-4">
+          <h2 className="text-xl font-bold">{group.name ?? group.wa_id}</h2>
+          <p className="text-sm text-gray-500">{group.wa_id}</p>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 w-full flex flex-col">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 flex flex-col">
         {messages
-          .filter((msg) => msg.text && msg?.text?.trim() !== "")
+          .filter((msg) => msg.text && msg.text.trim() !== "")
           .map((msg) => (
             <div
               key={msg.message_id}
@@ -51,6 +65,7 @@ export default function ChatWindow({ group }: Props) {
           ))}
       </div>
 
+      {/* Input */}
       <div className="border-t p-2">
         <MessageInput waId={group.wa_id} />
       </div>

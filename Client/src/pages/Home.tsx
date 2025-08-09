@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import ChatList from "../components/ChatList";
 import ChatWindow from "../components/ChatWindow";
 import type { ChatGroup } from "../types/message";
 import { fetchUsers } from "../api/messages";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [users, setUsers] = useState<ChatGroup[]>([]);
-  const [selectedChat, setSelectedChat] = useState<ChatGroup | null>(null);
+  const navigate = useNavigate();
+  const { wa_id } = useParams();
 
   useEffect(() => {
     loadUsers();
@@ -17,12 +19,15 @@ export default function Home() {
     setUsers(data);
   };
 
+  const selectedChat = users.find((u) => u.wa_id === wa_id) || null;
+
   return (
     <div className="flex h-screen">
-      {/* Left panel: Chat list */}
-      <ChatList chats={users} onSelect={(chat) => setSelectedChat(chat)} />
-
-      {/* Right panel: Chat window */}
+      <ChatList
+        chats={users}
+        selectedWaId={wa_id}
+        onSelect={(chat) => navigate(`/chat/${chat.wa_id}`)}
+      />
       <div className="flex-1">
         {selectedChat ? (
           <ChatWindow group={selectedChat} />
