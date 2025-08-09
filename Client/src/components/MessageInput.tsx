@@ -36,7 +36,7 @@ export default function MessageInput({ waId, name }: Props) {
   return (
     <div className="flex gap-2">
       <input
-        className="border rounded p-2 w-full"
+        className="border rounded p-2 w-full focus:outline-none focus:ring-[1px] focus:ring-green-300"
         placeholder="Type a message..."
         value={text}
         onChange={(e) => setText(e.target.value)}

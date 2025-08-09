@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { ChatGroup, Message } from "../types/message";
 import MessageInput from "./MessageInput";
 import { fetchChat } from "../api/messages";
-import { BackIcon } from "../Icons";
+import { BackIcon, DoubleTickIcon, SingleTickIcon } from "../Icons";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 
@@ -93,13 +93,41 @@ export default function ChatWindow({ group }: Props) {
           .map((msg) => (
             <div
               key={msg.message_id}
-              className={`max-w-[70%] p-2 rounded-lg shadow ${
+              className={`max-w-60 sm:max-w-96 p-2 rounded-lg shadow ${
                 msg.from === "admin" ? "bg-green-100 self-end" : "bg-gray-200"
               }`}
             >
-              <p>{msg.text}</p>
-              <div className="text-xs text-gray-500 text-right">
-                {new Date(msg.timestamp).toLocaleTimeString()} - {msg.status}
+              <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">
+                {msg.text}
+              </p>
+
+              <div className="text-xs text-gray-500 text-right flex items-center gap-2 justify-end">
+                {/* Time without seconds */}
+                <div>
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+
+                {/* Status Icons */}
+                <div className="flex items-center">
+                  {msg.status === "sent" && (
+                    <span className="text-gray-600">
+                      <SingleTickIcon />
+                    </span>
+                  )}
+                  {msg.status === "delivered" && (
+                    <span className="text-gray-600">
+                      <DoubleTickIcon />
+                    </span>
+                  )}
+                  {msg.status === "read" && (
+                    <span className="text-blue-600">
+                      <DoubleTickIcon />
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
