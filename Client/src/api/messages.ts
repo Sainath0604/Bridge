@@ -1,10 +1,12 @@
 // src/services/message.ts
 import axios from "axios";
 import type { ChatGroup, Message } from "../types/message";
+import { getServerUrl } from "../utils/getServerUrl";
 
-const API_USERS = "http://localhost:5000/api/users";
-const API_MESSAGES = "http://localhost:5000/api/messages";
-const API_SEND = "http://localhost:5000/api/send";
+const serverUrl = getServerUrl();
+const API_USERS = `${serverUrl}/api/users`;
+const API_MESSAGES = `${serverUrl}/api/messages`;
+const API_SEND = `${serverUrl}/api/send`;
 
 /**
  * Fetch the list of chat groups (users).

@@ -1,8 +1,9 @@
 // src/context/SocketContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { getServerUrl } from "../utils/getServerUrl";
 
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = getServerUrl();
 
 const SocketContext = createContext<Socket | null>(null);
 
