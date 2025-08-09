@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node index.js"
+    "prestart": "node scripts/processPayloads.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "process-payloads": "node scripts/processPayloads.js"
   },
   "author": "",
   "license": "ISC",
