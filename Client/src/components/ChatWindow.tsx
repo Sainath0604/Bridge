@@ -12,8 +12,28 @@ interface Props {
 
 export default function ChatWindow({ group }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true); // ✅ loading state
   const navigate = useNavigate();
   const socket = useSocket();
+
+  const loadMessages = async (wa_id: string) => {
+    setLoading(true); // start loading
+    try {
+      const chats = await fetchChat(wa_id);
+      if (Array.isArray(chats)) {
+        setMessages(chats);
+      } else if (chats && Array.isArray(chats.messages)) {
+        setMessages(chats.messages);
+      } else {
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error("❌ Failed to load messages:", error);
+      setMessages([]);
+    } finally {
+      setLoading(false); // end loading
+    }
+  };
 
   // Load messages when chat changes
   useEffect(() => {
@@ -31,44 +51,22 @@ export default function ChatWindow({ group }: Props) {
       return;
     }
 
-    console.log(`🔌 Setting up socket listener for wa_id: ${group.wa_id}`);
-
     const handleIncomingMessage = (message: Message) => {
-      console.log("📡 Received socket event message:new:", message);
-
       if (message.wa_id === group.wa_id) {
-        console.log(`✅ Message belongs to current chat (${group.wa_id})`);
-
         setMessages((prev) => {
           const exists = prev.some((m) => m.message_id === message.message_id);
-          if (exists) {
-            console.log(`⚠️ Duplicate message ignored: ${message.message_id}`);
-            return prev;
-          }
-          console.log(`➕ Adding new message: ${message.message_id}`);
+          if (exists) return prev;
           return [...prev, message];
         });
-      } else {
-        console.log(`⏩ Ignored message for different wa_id: ${message.wa_id}`);
       }
     };
 
     socket.on("message:new", handleIncomingMessage);
 
     return () => {
-      console.log(`🛑 Removing socket listener for wa_id: ${group.wa_id}`);
       socket.off("message:new", handleIncomingMessage);
     };
   }, [socket, group?.wa_id]);
-
-  const loadMessages = async (wa_id: string) => {
-    const chats = await fetchChat(wa_id);
-    if (Array.isArray(chats)) {
-      setMessages(chats);
-    } else if (chats && Array.isArray(chats.messages)) {
-      setMessages(chats.messages);
-    }
-  };
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -88,49 +86,48 @@ export default function ChatWindow({ group }: Props) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2 flex flex-col">
-        {messages
-          .filter((msg) => msg.text && msg.text.trim() !== "")
-          .map((msg) => (
-            <div
-              key={msg.message_id}
-              className={`max-w-60 sm:max-w-96 p-2 rounded-lg shadow ${
-                msg.from === "admin" ? "bg-green-100 self-end" : "bg-gray-200"
-              }`}
-            >
-              <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">
-                {msg.text}
-              </p>
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-400"></div>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center text-gray-400 mt-10">No messages yet</div>
+        ) : (
+          messages
+            .filter((msg) => msg.text && msg.text.trim() !== "")
+            .map((msg) => (
+              <div
+                key={msg.message_id}
+                className={`max-w-60 sm:max-w-96 p-2 rounded-lg shadow ${
+                  msg.from === "admin" ? "bg-green-100 self-end" : "bg-gray-200"
+                }`}
+              >
+                <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">
+                  {msg.text}
+                </p>
 
-              <div className="text-xs text-gray-500 text-right flex items-center gap-2 justify-end">
-                {/* Time without seconds */}
-                <div>
-                  {new Date(msg.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-
-                {/* Status Icons */}
-                <div className="flex items-center">
-                  {msg.status === "sent" && (
-                    <span className="text-gray-600">
-                      <SingleTickIcon />
-                    </span>
-                  )}
-                  {msg.status === "delivered" && (
-                    <span className="text-gray-600">
-                      <DoubleTickIcon />
-                    </span>
-                  )}
-                  {msg.status === "read" && (
-                    <span className="text-blue-600">
-                      <DoubleTickIcon />
-                    </span>
-                  )}
+                <div className="text-xs text-gray-500 text-right flex items-center gap-2 justify-end">
+                  <div>
+                    {new Date(msg.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                  <div className="flex items-center">
+                    {msg.status === "sent" && (
+                      <SingleTickIcon className="text-gray-600" />
+                    )}
+                    {msg.status === "delivered" && (
+                      <DoubleTickIcon className="text-gray-600" />
+                    )}
+                    {msg.status === "read" && (
+                      <DoubleTickIcon className="text-blue-600" />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+        )}
       </div>
 
       {/* Input */}

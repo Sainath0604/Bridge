@@ -11,7 +11,14 @@ export default function Layout() {
   const navigate = useNavigate();
   const socket = useSocket();
   const [users, setUsers] = useState<ChatGroup[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const loadUsers = async () => {
+    setLoading(true);
+    const data = await fetchUsers();
+    setUsers(data);
+    setLoading(false);
+  };
   useEffect(() => {
     loadUsers();
   }, []);
@@ -58,19 +65,17 @@ export default function Layout() {
     };
   }, [socket]);
 
-  const loadUsers = async () => {
-    const data = await fetchUsers();
-    setUsers(data);
-  };
-
   const selectedChat = users.find((u) => u.wa_id === wa_id) || null;
 
   return (
     <div className="flex h-screen">
       {/* ChatList */}
-      <div className={`${wa_id ? "hidden sm:block" : "block"} w-full sm:w-1/3`}>
+      <div
+        className={`${wa_id ? "hidden sm:block" : "block"} w-full sm:w-[20%]`}
+      >
         <ChatList
           chats={users}
+          loading={loading}
           selectedWaId={wa_id}
           onSelect={(chat) => navigate(`/chats/${chat.wa_id}`)}
         />
